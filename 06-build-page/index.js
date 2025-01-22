@@ -3,7 +3,7 @@ const path = require('path');
 
 function read_file(file) {
     return new Promise((resolve, reject) => {
-      const stream = fs.createReadStream(path.join(__dirname, file), { encoding: "utf-8" });
+      const stream = fs.createReadStream(file, { encoding: "utf-8" });
   
       let data = "";
   
@@ -87,19 +87,28 @@ function copy_style(){
   (async () => {
     try {
 const stream = fs.createReadStream(path.join(__dirname, 'template.html'), { encoding: "utf-8" });
-
-
+const componentsDir = path.join(__dirname, 'components');
+const componentFiles = await fs.promises.readdir(componentsDir, { withFileTypes: true });
 let data = "";
-const files = [ "components/header.html", "components/articles.html", "components/footer.html",];
 
-// Используем Promise.all для одновременного чтения всех файлов
-const [articles, footer, header] = await Promise.all(files.map(read_file));
+
+
 stream.on("data", (chunk) => (data += chunk));
 
-stream.on("end", () => {
-    data = data.toString().replace("{{header}}", articles)
-    data = data.toString().replace("{{articles}}", footer)
-    data = data.toString().replace("{{footer}}", header)
+stream.on("end", async() => {
+  
+  for (const file of componentFiles) {
+    if (file.isFile() && path.extname(file.name) === '.html') {
+      
+      const componentName = path.basename(file.name, '.html');
+      const componentPath = path.join(componentsDir, file.name);
+      const componentContent = await read_file(componentPath)
+      data = data.replace(`{{${componentName}}}`, componentContent);
+      
+     
+    }
+  }
+    
     fs.mkdir(path.join(__dirname, 'project-dist'), { recursive: true }, (err) => {
         if (err) {
           return console.error(err);
@@ -126,27 +135,3 @@ stream.on("end", () => {
 
 
 
-// function copyDir(dirname) {
-//   fs.mkdir(path.join(__dirname, dirname), { recursive: true }, (err) => {
-//     if (err) {
-//       return console.error(err);
-//     }
-//     fs.readdir(`${__dirname}\\files`, (err, files) => {
-//       if (err) {
-//         console.error('Ошибка при чтении директории:', err);
-//         return;
-//       }
-//       for (let file of files) {
-//         const sourcePath = path.join(__dirname, 'files', file);
-//         const destinationPath = path.join(__dirname, dirname, file);
-
-//         fs.copyFile(sourcePath, destinationPath, (err) => {
-//           if (err) {
-//             console.error(`Ошибка при копировании файла ${file}:`, err);
-//             return;
-//           }
-//         });
-//       }
-//     });
-//   });
-// }

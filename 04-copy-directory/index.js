@@ -1,6 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 function copyDir(dirname) {
+  fs.rm(path.join(__dirname, dirname), { recursive: true, force: true }, (err) => {
+    if (err) {
+      return console.error('Ошибка при удалении директории:', err);
+    }
   fs.mkdir(path.join(__dirname, dirname), { recursive: true }, (err) => {
     if (err) {
       return console.error(err);
@@ -24,3 +28,5 @@ function copyDir(dirname) {
     });
   });
 }
+  )}
+copyDir('files-copy')
